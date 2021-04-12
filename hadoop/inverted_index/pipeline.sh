@@ -14,6 +14,7 @@
 # See https://vaneyckt.io/posts/safer_bash_scripts_with_set_euxo_pipefail/
 set -Eeuo pipefail
 rm -rf output0
+rm -rf total_document_count.txt
 #
 hadoop \
   jar ../hadoop-streaming-2.7.2.jar \

@@ -8,4 +8,4 @@ for line in sys.stdin:
 
 sys.stdout.write(str(result) + "\t \n")
 with open("total_document_count.txt", "w") as file:
-    file.write(str(result))
+    file.write(str(result) + "\n")

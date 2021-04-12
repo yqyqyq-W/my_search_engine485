@@ -4,7 +4,7 @@ import sys
 import math
 
 file = open("total_document_count.txt", "r")
-doc_count = int((list(file.readline())[0]).split("\n")[0])
+doc_count = int((file.readline()).split("\n")[0])
 file.close()
 # format: key: word\t<docid>, val: count
 key_dict = {}
