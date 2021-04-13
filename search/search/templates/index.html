@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet" type="text/css"/>
+    <title>search485</title>
+</head>
+<body>
+    <!-- DO NOT CHANGE THIS (aside from where we say 'FIXME') -->
+    <form action="/" method="GET">
+        <div><input type="text" name="q"/></div>
+        <div><input type="range" name="w" max="1" min="0" step="0.01"/></div>
+        <input type="submit" value="Search"/>
+    </form>
+    {% if ifempty == 0 %}
+    {% for result in results %}
+    {% if result['url'] != '' %}
+        <a class="doc_url" href="{{result['url']}}">{{ result['url'] }}</a>
+    {% else %}
+        <a class="doc_url" href="{{result['url']}}"> No url available </a>
+    {% endif %}
+    <div class="doc_title">{{ result['title'] }}</div>
+    {% if result['summary'] != '' %}
+        <div class="doc_summary">{{ result['summary'] }}</div>
+    {% else %}
+        <div class="doc_summary">No summary available</div>
+    {% endif %}
+    {% else %}
+        <div class="no_results"></div>
+    {% endfor %}
+    {% endif %}
+</body>
+</html>
