@@ -95,12 +95,22 @@ def second_route():
         else:
             query_dict[item] = 1
 
+    if query_list[0] not in inverted_index:
+        empty_context = {
+            "hits": []
+        }
+        return jsonify(**empty_context)
     document_match = inverted_index[query_list[0]]['document_match']
+
     for item in range(1, len(query_list)):
         new_match = inverted_index[query_list[item]]['document_match']
         document_match = list(set(document_match) & set(new_match))
         if not len(document_match):
-            break
+            empty_context = {
+                "hits": []
+            }
+            return jsonify(**empty_context)
+
     print(document_match)
     # Find related page rank
     page_rank_dict = {}
@@ -155,7 +165,14 @@ def second_route():
     for w in sorted_keys:
         sorted_context[w] = context[w]
 
-    return jsonify(**sorted_context)
+    final_context = {
+        "hits": []
+    }
+    for key in sorted_context:
+        instance_dict = {"docid": key, "score": sorted_context[key]}
+        final_context["hits"].append(instance_dict)
+
+    return jsonify(**final_context)
 
 def dot(v1, v2):
     """Calculate dot product."""
@@ -177,7 +194,8 @@ def calculate_vector(query_dict, w, page_rank_dict, document_match, idf):
             q_freq = query_dict[key]
             d_freq = inverted_index[key][doc][0]
             query_vector.append(q_freq * idf_instance)
-            document_vector.append(int(d_freq) * idf_instance)
+            print(type(idf_instance))
+            document_vector.append(int(d_freq) * float(idf_instance))
 
         # Compute dot product
         print(query_vector)
@@ -202,7 +220,7 @@ def calculate_vector(query_dict, w, page_rank_dict, document_match, idf):
         print(page_rank_dict[doc])
         print(w)
         print(tfidf)
-        weighted_score = w * float(page_rank_dict[doc]) + (1 - w) * tfidf
+        weighted_score = float(w) * float(page_rank_dict[doc]) + (1 - float(w)) * float(tfidf)
 
         # Update context with weighted score and related doc_id
         context[doc] = weighted_score

@@ -18,7 +18,8 @@ def result():
         print(res)
         res = res.json()
         index = 0
-        for item in res:
+        print(res)
+        for item in res['hits']:
             if index > 10:
                 break
             cur = connection.execute(

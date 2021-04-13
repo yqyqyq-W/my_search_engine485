@@ -12,6 +12,7 @@
         <input type="submit" value="Search"/>
     </form>
     {% if ifempty == 0 %}
+    <div>
     {% for result in results %}
     {% if result['url'] != '' %}
         <a class="doc_url" href="{{result['url']}}">{{ result['url'] }}</a>
@@ -24,6 +25,7 @@
     {% else %}
         <div class="doc_summary">No summary available</div>
     {% endif %}
+    </div>
     {% else %}
         <div class="no_results"></div>
     {% endfor %}
