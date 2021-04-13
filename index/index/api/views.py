@@ -3,6 +3,7 @@ import flask
 from flask import jsonify, request
 import index
 import pathlib
+from math import sqrt
 
 # page rank structure
 # {"doc_id1": factor,
@@ -28,17 +29,18 @@ stop_words = []
 def before_first_request():
     """Read in data."""
     index_package_dir = pathlib.Path(__file__).parent.parent
+    index_dir = pathlib.Path(__file__).parent.parent
     print(index_package_dir)
     # FIX INPUT DIRECTORIES
-    stopwords_filename = "stopwords.txt"
-    pagerank_filename = "pagerank.out"
-    inverted_index_filename = index_package_dir / "hadoop" / "inverted_index" / "inverted_index.txt"
+    stopwords_filename = index_dir / "stopwords.txt"
+    pagerank_filename = index_dir / "pagerank.out"
+    inverted_index_filename = index_package_dir / "inverted_index.txt"
     with open(pagerank_filename, mode='r') as page:
         line = page.readline()
         while line:
             line = line.rstrip()
             line_split = line.split(',')
-            inverted_index[line_split[0]] = line_split[1]
+            page_rank[line_split[0]] = line_split[1]
             line = page.readline()
 
     with open(inverted_index_filename, mode='r') as invert:
@@ -55,14 +57,14 @@ def before_first_request():
                 inverted_index[line_split[0]][line_split[item]] = [line_split[item+1], line_split[item+2]]
                 document_match.append(line_split[item])
             inverted_index[line_split[0]]["document_match"] = document_match
-            line = page.readline()
+            line = invert.readline()
 
     with open(stopwords_filename, mode='r') as stopwords:
         line = stopwords.readline()
         while line:
             line = line.rstrip()
             stop_words.append(line)
-            line = page.readline()
+            line = stopwords.readline()
 
 @index.app.route('/api/v1/', methods=['GET'])
 def first_route():
@@ -77,7 +79,7 @@ def first_route():
 def second_route():
     """Handle second route."""
     w = request.args.get('w')
-    query = request.args.get('query')
+    query = request.args.get('q')
 
     # Find common doc_id having all the query words
     query_list = query.split(' ')
@@ -93,13 +95,13 @@ def second_route():
         else:
             query_dict[item] = 1
 
-    document_match = inverted_index[query_list[0]]
+    document_match = inverted_index[query_list[0]]['document_match']
     for item in range(1, len(query_list)):
-        new_match = inverted_index[query_list[item]]
+        new_match = inverted_index[query_list[item]]['document_match']
         document_match = list(set(document_match) & set(new_match))
         if not len(document_match):
             break
-
+    print(document_match)
     # Find related page rank
     page_rank_dict = {}
     for item in document_match:
@@ -157,7 +159,7 @@ def second_route():
 
 def dot(v1, v2):
     """Calculate dot product."""
-    return sum(x * y for x, y in zip(v1, v2))
+    return sum(float(x) * float(y) for x, y in zip(v1, v2))
 
 def calculate_vector(query_dict, w, page_rank_dict, document_match, idf):
     """Calculate query vector and document vector for each document."""
@@ -167,32 +169,40 @@ def calculate_vector(query_dict, w, page_rank_dict, document_match, idf):
         # d: <term frequency in document> * <idf>
         query_vector = []
         document_vector = []
+        print(query_dict)
+        counter = 0
         for key in query_dict:
-            idf_instance = idf[key]
+            idf_instance = idf[counter]
+            counter += 1
             q_freq = query_dict[key]
-            d_freq = inverted_index[key][doc]
+            d_freq = inverted_index[key][doc][0]
             query_vector.append(q_freq * idf_instance)
-            document_vector.append(d_freq * idf_instance)
+            document_vector.append(int(d_freq) * idf_instance)
 
         # Compute dot product
+        print(query_vector)
+        print(document_vector)
         dot_product_qd = dot(query_vector, document_vector)
         # Compute normalization factor for query and document
         norm_q = 0
         for item in query_vector:
-            norm_q += item * item
+            norm_q += float(item) * float(item)
         norm_q = sqrt(norm_q)
 
         norm_d = 0
         for item in document_vector:
-            norm_d += item * item
+            norm_d += float(item) * float(item)
         norm_d = sqrt(norm_d)
 
         # Compute TF-IDF
-        dot_product_norm_qd = dot(norm_q, norm_d)
+        dot_product_norm_qd = norm_q * norm_d
         tfidf = dot_product_qd / dot_product_norm_qd
 
         # Compute weighted score
-        weighted_score = w * page_rank_dict[doc] + (1 - w) * tfidf
+        print(page_rank_dict[doc])
+        print(w)
+        print(tfidf)
+        weighted_score = w * float(page_rank_dict[doc]) + (1 - w) * tfidf
 
         # Update context with weighted score and related doc_id
         context[doc] = weighted_score
