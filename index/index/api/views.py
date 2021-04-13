@@ -3,7 +3,6 @@ import flask
 from flask import jsonify, request
 import index
 import pathlib
-import numpy as np
 
 # page rank structure
 # {"doc_id1": factor,
@@ -156,6 +155,10 @@ def second_route():
 
     return jsonify(**sorted_context)
 
+def dot(v1, v2):
+    """Calculate dot product."""
+    return sum(x * y for x, y in zip(v1, v2))
+
 def calculate_vector(query_dict, w, page_rank_dict, document_match, idf):
     """Calculate query vector and document vector for each document."""
     context = {}
@@ -172,7 +175,7 @@ def calculate_vector(query_dict, w, page_rank_dict, document_match, idf):
             document_vector.append(d_freq * idf_instance)
 
         # Compute dot product
-        dot_product_qd = np.dot(query_vector, document_vector)
+        dot_product_qd = dot(query_vector, document_vector)
         # Compute normalization factor for query and document
         norm_q = 0
         for item in query_vector:
@@ -185,7 +188,7 @@ def calculate_vector(query_dict, w, page_rank_dict, document_match, idf):
         norm_d = sqrt(norm_d)
 
         # Compute TF-IDF
-        dot_product_norm_qd = np.dot(norm_q, norm_d)
+        dot_product_norm_qd = dot(norm_q, norm_d)
         tfidf = dot_product_qd / dot_product_norm_qd
 
         # Compute weighted score
