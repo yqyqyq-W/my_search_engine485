@@ -60,3 +60,4 @@ hadoop \
 
 rm -rf output3/hadooptmp
 cat output3/* > inverted_index.txt
+mv inverted_index.txt ../../index/index/
