@@ -14,9 +14,12 @@ def result():
         query = request.args['q']
         weight = request.args['w']
         connection = search.search.model.get_db()
-        res = requests.get('http://localhost:8000/api/v1/hits/?w=' + weight + '&q=' + query).json()
+        res = requests.get('http://localhost:8001/api/v1/hits/?w=' + weight + '&q=' + query)
+        print(res)
+        res = res.json()
         index = 0
-        for item in res:
+        print(res)
+        for item in res['hits']:
             if index > 10:
                 break
             cur = connection.execute(
