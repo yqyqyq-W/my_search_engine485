@@ -95,16 +95,23 @@ def second_route():
         else:
             query_dict[item] = 1
 
-    if query_list[0] not in inverted_index:
-        empty_context = {
-            "hits": []
-        }
-        return jsonify(**empty_context)
+    result = check_empty(query_list[0], inverted_index)
+    if result:
+        return result
+
     document_match = inverted_index[query_list[0]]['document_match']
 
     for item in range(1, len(query_list)):
+        # check if the key exists in the inverted index dictionary
+        # if not, return an 'empty' json object
+        new_result = check_empty(query_list[item], inverted_index)
+        if new_result:
+            return new_result
+
         new_match = inverted_index[query_list[item]]['document_match']
         document_match = list(set(document_match) & set(new_match))
+        
+        # handle results if document match is empty
         if not len(document_match):
             empty_context = {
                 "hits": []
@@ -122,41 +129,6 @@ def second_route():
     for key in query_dict:
         idf.append(inverted_index[key]["idf"])
 
-    # Calculate query vector and document vector for each document
-    # for doc in document_match:
-    #     # q: <term frequency in query> * <idf>
-    #     # d: <term frequency in document> * <idf>
-    #     query_vector = []
-    #     document_vector = []
-    #     for key in query_dict:
-    #         idf_instance = idf[key]
-    #         q_freq = query_dict[key]
-    #         d_freq = inverted_index[key][doc]
-    #         query_vector.append(q_freq * idf_instance)
-    #         document_vector.append(d_freq * idf_instance)
-    #
-    #     # Compute dot product
-    #     dot_product_qd = np.dot(query_vector, document_vector)
-    #     # Compute normalization factor for query and document
-    #     norm_q = 0
-    #     for item in query_vector:
-    #         norm_q += item * item
-    #     norm_q = sqrt(norm_q)
-    #
-    #     norm_d = 0
-    #     for item in document_vector:
-    #         norm_d += item * item
-    #     norm_d = sqrt(norm_d)
-    #
-    #     # Compute TF-IDF
-    #     dot_product_norm_qd = np.dot(norm_q, norm_d)
-    #     tfidf =dot_product_qd / dot_product_norm_qd
-    #
-    #     # Compute weighted score
-    #     weighted_score = w * page_rank_dict[doc] + (1 - w) * tfidf
-    #
-    #     # Update context with weighted score and related doc_id
-    #     context[doc] = weighted_score
     context = calculate_vector(query_dict, w, page_rank_dict, document_match, idf)
 
     # Sort the context dictionary by value
@@ -177,6 +149,15 @@ def second_route():
 def dot(v1, v2):
     """Calculate dot product."""
     return sum(float(x) * float(y) for x, y in zip(v1, v2))
+
+def check_empty(key, dict):
+    if key not in dict:
+        empty_context = {
+            "hits": []
+        }
+        return jsonify(**empty_context)
+    else:
+        return 0
 
 def calculate_vector(query_dict, w, page_rank_dict, document_match, idf):
     """Calculate query vector and document vector for each document."""

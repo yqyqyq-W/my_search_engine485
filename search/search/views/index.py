@@ -20,7 +20,7 @@ def result():
         index = 0
         print(res)
         for item in res['hits']:
-            if index > 10:
+            if index > 9:
                 break
             cur = connection.execute(
                 "SELECT * FROM Documents WHERE docid = ?", (item['docid'],)
