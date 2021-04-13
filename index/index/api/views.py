@@ -33,7 +33,7 @@ def before_first_request():
     # FIX INPUT DIRECTORIES
     stopwords_filename = "stopwords.txt"
     pagerank_filename = "pagerank.out"
-    inverted_index_filename = index_package_dir / "inverted_index.txt"
+    inverted_index_filename = index_package_dir / "hadoop" / "inverted_index" / "inverted_index.txt"
     with open(pagerank_filename, mode='r') as page:
         line = page.readline()
         while line:
