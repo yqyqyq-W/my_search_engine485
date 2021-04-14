@@ -16,10 +16,13 @@ fi
 # Parse argument.  $1 is the first argument
 case $1 in
   "start")
+  if lsof -Pi :8001 -sTCP:LISTEN -t >/dev/null ; then
+    exit 1
+  fi
   export FLASK_DEBUG=False
   export FLASK_APP=index
   export INDEX_SETTINGS=config.py
-  flask run --host 0.0.0.0 --port 8001
+  flask run --host 0.0.0.0 --port 8001 &> /dev/null &
     ;;
 
   "stop")
@@ -28,10 +31,13 @@ case $1 in
 
   "restart")
     pkill -f 'flask run --host 0.0.0.0 --port 8001'
+  if lsof -Pi :8001 -sTCP:LISTEN -t >/dev/null ; then
+    exit 1
+  fi
   export FLASK_DEBUG=False
   export FLASK_APP=index
   export SEARCH_SETTINGS=config.py
-  flask run --host 0.0.0.0 --port 8001
+  flask run --host 0.0.0.0 --port 8001 &> /dev/null &
     ;;
 
 esac
