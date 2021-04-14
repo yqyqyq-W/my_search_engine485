@@ -1,20 +1,20 @@
 """Search view."""
-import os
-import pathlib
 import flask
-from flask import request, redirect, session, url_for, send_from_directory
-import search
+from flask import request
 import requests
+import search
 
 
 @search.app.route('/', methods=['GET'])
 def result():
+    """Search result."""
     content = {'results': [], 'ifempty': 1}
     if bool(request.args):
         query = request.args['q']
         weight = request.args['w']
         connection = search.search.model.get_db()
-        res = requests.get('http://localhost:8001/api/v1/hits/?w=' + weight + '&q=' + query)
+        res = requests.get('http://localhost:8001/api/v1/hits/?w='
+                           + weight + '&q=' + query)
         print(res)
         res = res.json()
         index = 0
