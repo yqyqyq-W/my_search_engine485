@@ -13,7 +13,8 @@ def result():
         query = request.args['q']
         weight = request.args['w']
         connection = search.search.model.get_db()
-        res = requests.get('http://localhost:8001/api/v1/hits/?w='
+        url = search.app.config["INDEX_API_URL"]
+        res = requests.get(url + '?w='
                            + weight + '&q=' + query)
         print(res)
         res = res.json()
