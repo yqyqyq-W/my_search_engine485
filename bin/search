@@ -16,7 +16,7 @@ fi
 # Parse argument.  $1 is the first argument
 case $1 in
   "start")
-  export FLASK_DEBUG=True
+  export FLASK_DEBUG=False
   export FLASK_APP=search
   export SEARCH_SETTINGS=config.py
   flask run --host 0.0.0.0 --port 8000
@@ -28,7 +28,7 @@ case $1 in
 
   "restart")
     pkill -f 'flask run --host 0.0.0.0 --port 8000'
-  export FLASK_DEBUG=True
+  export FLASK_DEBUG=False
   export FLASK_APP=search
   export SEARCH_SETTINGS=config.py
   flask run --host 0.0.0.0 --port 8000

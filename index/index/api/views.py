@@ -1,7 +1,7 @@
 """REST API for index server."""
-import pathlib
-from math import sqrt
 import re
+from math import sqrt
+import pathlib
 from flask import jsonify, request
 import index
 
@@ -19,9 +19,8 @@ page_rank = {}
 #  "item2": {"idf": 123,
 #       "doc_id_x": [occurrence, normalization],
 #       "doc_id_y": [occurrence, normalization], ...,
-#       "doc_id_y": [occurrence, normalization], ...,
-#       "document_match": [list of doc_ids]}
-# }
+#       "document_match": [list of doc_ids]}}
+
 inverted_index = {}
 
 stop_words = []
@@ -120,31 +119,50 @@ def second_route():
         document_match = list(set(document_match) & set(new_match))
 
         # handle results if document match is empty
-        if not document_match:
+        if len(document_match) == 0:
             empty_context = {
                 "hits": []
             }
             return jsonify(**empty_context)
 
-    # print(document_match)
-    # Find related page rank
-    page_rank_dict = {}
-    for item in document_match:
-        page_rank_dict[item] = page_rank[item]
+    # #print(document_match)
+    # # Find related page rank
+    # page_rank_dict = {}
+    # for item in document_match:
+    #     page_rank_dict[item] = page_rank[item]
 
     # Find inverted index idf
     idf = []
     for key in query_dict:
         idf.append(inverted_index[key]["idf"])
 
-    context = calculate_vector(query_dict, weight,
-                               page_rank_dict, document_match, idf)
+    context = calculate_vector(query_dict, weight, document_match, idf)
 
+    # # Sort the context dictionary by value
+    # sorted_context = {}
+    # sorted_keys = sorted(context, key=context.get, reverse=True)
+    # for key in sorted_keys:
+    #     sorted_context[key] = context[key]
+    #
+    # final_context = {
+    #     "hits": []
+    # }
+    # for key in sorted_context:
+    #     instance_dict = {"docid": int(key),
+    #     "score": float(sorted_context[key])}
+    #     final_context["hits"].append(instance_dict)
+    #
+    # #print(final_context)
+    return return_final(context)
+
+
+def return_final(context):
+    """Return final context."""
     # Sort the context dictionary by value
     sorted_context = {}
     sorted_keys = sorted(context, key=context.get, reverse=True)
-    for weight in sorted_keys:
-        sorted_context[weight] = context[weight]
+    for key in sorted_keys:
+        sorted_context[key] = context[key]
 
     final_context = {
         "hits": []
@@ -158,32 +176,57 @@ def second_route():
     return jsonify(**final_context)
 
 
-def dot(variable1, variable2):
+def dot(list1, list2):
     """Calculate dot product."""
-    return sum(float(x) * float(y) for x, y in zip(variable1, variable2))
+    return sum(float(x) * float(y) for x, y in zip(list1, list2))
 
 
-def check_empty(key, word_dict):
+def check_empty(key, dict_return):
     """Check empty."""
-    if key not in word_dict:
+    if key not in dict_return:
         empty_context = {
             "hits": []
         }
         return empty_context
-    else:
-        return 0
+    return 0
 
 
-def calculate_vector(query_dict, weight, page_rank_dict, document_match, idf):
+def compute_score(query_vector, weight, query_dict, dot_product_qd, doc):
+    """Compute weighted score."""
+    # Compute normalization factor for query and document
+    norm_d = 0
+    norm_q = 0
+
+    for item in query_vector:
+        norm_q += float(item) * float(item)
+
+    norm_q = sqrt(norm_q)
+
+    for key in query_dict:
+        norm_d = float(inverted_index[key][doc][1])
+        break
+
+    norm_d = sqrt(norm_d)
+
+    # Compute TF-IDF
+    dot_product_norm_qd = norm_q * norm_d
+    tfidf = dot_product_qd / dot_product_norm_qd
+
+    # Compute weighted score
+    weighted_score = \
+        float(weight) * float(page_rank[doc]) + \
+        (1 - float(weight)) * float(tfidf)
+    return weighted_score
+
+
+def calculate_vector(query_dict, weight, document_match, idf):
     """Calculate query vector and document vector for each document."""
     context = {}
-    # print(inverted_index[key])
     for doc in document_match:
         # q: <term frequency in query> * <idf>
         # d: <term frequency in document> * <idf>
         query_vector = []
         document_vector = []
-        # print(query_dict)
         counter = 0
         for key in query_dict:
             idf_instance = idf[counter]
@@ -194,30 +237,13 @@ def calculate_vector(query_dict, weight, page_rank_dict, document_match, idf):
             document_vector.append(int(d_freq) * float(idf_instance))
 
         # Compute dot product
-        dot_product_qd = dot(query_vector, document_vector)
-        # Compute normalization factor for query and document
-        norm_d = 0
-        norm_q = 0
+        # dot_product_qd =
+        # dot(query_vector, document_vector)
 
-        for item in query_vector:
-            norm_q += float(item) * float(item)
-
-        norm_q = sqrt(norm_q)
-
-        for key in query_dict:
-            norm_d = float(inverted_index[key][doc][1])
-            break
-
-        norm_d = sqrt(norm_d)
-
-        # Compute TF-IDF
-        dot_product_norm_qd = norm_q * norm_d
-        tfidf = dot_product_qd / dot_product_norm_qd
-
-        # Compute weighted score
-        weighted_score = \
-            float(weight) * float(page_rank_dict[doc]) + \
-            (1 - float(weight)) * float(tfidf)
+        weighted_score = compute_score(
+            query_vector, weight, query_dict,
+            dot(query_vector, document_vector), doc
+        )
 
         # Update context with weighted score and related doc_id
         context[doc] = weighted_score

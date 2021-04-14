@@ -5,7 +5,7 @@ import flask
 app = flask.Flask(__name__)  # pylint: disable=invalid-name
 
 # Read settings from config module (insta485/config.py)
-#  app.config.from_object('insta485.config')
+# app.config.from_object('insta485.config')
 
 # Overlay settings read from a Python file whose path is set in the environment
 # variable INSTA485_SETTINGS. Setting this environment variable is optional.
